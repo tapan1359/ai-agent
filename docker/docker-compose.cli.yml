@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  assistant:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.assistant
+    volumes:
+      - ~/.aws:/root/.aws:ro
+    stdin_open: true
+    tty: true
+    environment:
+      AWS_DEFAULT_PROFILE: default

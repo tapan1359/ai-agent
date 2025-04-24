@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --color-primary-50: oklch(97.5% 0.02 230);
+  --color-primary-100: oklch(95% 0.04 230);
+  --color-primary-200: oklch(87% 0.07 230);
+  --color-primary-300: oklch(75% 0.11 230);
+  --color-primary-400: oklch(65% 0.15 230);
+  --color-primary-500: oklch(55% 0.19 230);
+  --color-primary-600: oklch(45% 0.21 230);
+  --color-primary-700: oklch(35% 0.23 230);
+  --color-primary-800: oklch(25% 0.25 230);
+  --color-primary-900: oklch(15% 0.27 230);
+
+  --color-dark-800: oklch(20% 0 0);
+  --color-dark-900: oklch(10% 0 0);
+}
+
+
+@layer base {
+  body {
+    @apply bg-dark-900 text-gray-100;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-dark-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-500;
+  }
+}
