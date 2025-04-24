@@ -19,7 +19,8 @@ async def lifespan(app: FastAPI):
     # Startup: Initialize the assistant
     await assistant._setup_agent()
     yield
-    # Shutdown: Add cleanup here if needed
+    # Shutdown: Clean up resources
+    await assistant.cleanup()
 
 app = FastAPI(
     title="AI Assistant API",
@@ -61,6 +62,7 @@ Please provide your response using proper markdown formatting:
 - Use ### for subheadings
 - Use tables when presenting structured data
 - Use [text](url) for links
+- Use `diagrams` directory to generate AWS architecture diagrams
 
 Here's the user's question:
 {prompt}

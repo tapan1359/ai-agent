@@ -1,48 +1,54 @@
-"""Core Cloud Assistant implementation."""
+"""Cloud Assistant using LangChain."""
 import asyncio
-from typing import List, Optional
-
-from langchain_aws import ChatBedrock
-from langgraph.prebuilt import create_react_agent
+from typing import Optional
 from langchain_core.messages import HumanMessage
-from langchain_core.tools import Tool
+from langchain_aws import ChatBedrock
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from langgraph.prebuilt import create_react_agent
 
 from ..config.mcp_config import get_mcp_config
 from ..tools.factory import CloudToolFactory
 
-
 class CloudAssistant:
-    """Cloud Assistant that combines multiple cloud providers with documentation tools."""
+    """Assistant for interacting with cloud services."""
 
-    def __init__(self, model_id: str = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"):
+    def __init__(
+        self,
+        model_id: str = "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+    ) -> None:
         """Initialize the Cloud Assistant.
 
         Args:
-            model_id (str): The model ID to use for the chat
+            model_id (str): Bedrock model ID to use
         """
         self.model = ChatBedrock(model_id=model_id)
         self.mcp_config = get_mcp_config()
         self.tool_factory = CloudToolFactory()
         self._print_welcome = True
+        self.agent = None
+        self.mcp_client = None
 
     def _print_welcome_message(self):
         """Print the welcome message with example questions."""
-        print("Welcome to the Cloud Assistant! Type 'exit' to quit.\n")
-        print("You can ask questions like:")
-        print("- How many S3 buckets do I have?")
+        print("\nWelcome to Cloud Assistant! Here are some example questions:")
         print("- List my EC2 instances")
         print("- Show my IAM users")
         print("- [Future] List my Azure VMs")
-        print("- [Future] Show my GCP storage buckets\n")
 
     async def _setup_agent(self) -> None:
         """Set up the agent with tools."""
         if self._print_welcome:
             self._print_welcome_message()
         
-        # Load all tools at initialization
-        all_tools = self.tool_factory.get_all_tools()
+        if not self.mcp_client:
+            self.mcp_client = MultiServerMCPClient(self.mcp_config)
+            await self.mcp_client.__aenter__() 
+
+        # Get MCP tools and combine with cloud tools
+        mcp_tools = self.mcp_client.get_tools()
+        all_tools = self.tool_factory.get_all_tools() + mcp_tools
+            
+        # Create agent with combined tools
         self.agent = create_react_agent(self.model, tools=all_tools)
 
     async def process_input(self, user_input: str) -> str:
@@ -64,7 +70,7 @@ class CloudAssistant:
         while True:
             user_input = input("You: ")
             if user_input.lower() in {"exit", "quit"}:
-                print("Exiting chat. Goodbye!")
+                print("Goodbye!")
                 break
 
             response = await self.process_input(user_input)
@@ -74,6 +80,10 @@ class CloudAssistant:
         """Start the Cloud Assistant in CLI mode."""
         await self._interaction_loop()
 
+    async def cleanup(self) -> None:
+        """Clean up resources."""
+        if self.mcp_client:
+            await self.mcp_client.__aexit__()
 
 def get_assistant():
     """Get a configured Cloud Assistant instance."""
